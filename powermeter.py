@@ -4,8 +4,6 @@ import json
 import time
 import datetime
 import calendar
-from pprint import pprint
-
 
 def split_months(data):
     sorted_data = sorted(data, key=lambda item: item["time"])
@@ -136,57 +134,63 @@ def parse_tariff_time(time_str):
 def parse_tariff_date(time_str):
     return time.strptime(time_str, "%m-%d")
 
-
-data = json.load(open('data.json'))
-
-months = split_months(data)
-
-tariffs = json.load(open('tariffs.json'))
-
-total = calculate(months, tariffs)
-
-config = json.load(open('config.json'))
-
-month = total["items"][-1]
-
-
 def get_hours(start_item, end_item):
     return (time.mktime(end_item["endTime"]) - time.mktime(start_item["startTime"])) / 60 / 60
 
 
-month_hours = get_hours(month["items"][0], month["items"][-1])
-total_kw = month["totalKw"]
-night = month["night"]
-cost = month["dayCost"] + month["nightCost"]
+def calculateAll(printAll = True):
+    data = json.load(open('data.json'))
 
-night_price_without_discount = calculate_cost(night, tariffs, month["tariff"], False, month["limitExceeded"])
-night_off = night_price_without_discount - night_price_without_discount * tariffs["nightPercent"] / 100.0
+    months = split_months(data)
 
-avg_load = (total_kw / month_hours)
+    tariffs = json.load(open('tariffs.json'))
 
-last_power_range = month["items"][-1]
-last_hours = get_hours(last_power_range, last_power_range)
-avg_load_last = (last_power_range["totalKw"] / last_hours)
+    total = calculate(months, tariffs)
 
-last_time = datetime.datetime.fromtimestamp(time.mktime(month["items"][-1]["endTime"]))
-last_month_day = datetime.datetime(last_time.year, last_time.month, calendar.monthrange(last_time.year, last_time.month)[1], 0, 0)
+    config = json.load(open('config.json'))
 
-hours_to_end = (last_month_day - last_time).total_seconds() / 60 / 60
+    month = total["items"][-1]
 
-limit = month["tariff"]["limit"]
+    month_hours = get_hours(month["items"][0], month["items"][-1])
+    total_kw = month["totalKw"]
+    night = month["night"]
+    cost = month["dayCost"] + month["nightCost"]
 
-print("Total: {0} / {1} kW".format(total_kw, limit))
-print("====================")
-print("Avg: {0} kW/h".format(round(avg_load, 2)))
-print("Expected: {0} / {1} kW".format(round(avg_load * hours_to_end, 0) + total_kw, limit))
-print("====================")
-print("Avg(last): {0} kW/h".format(round(avg_load_last, 2)))
-print("Expected(last): {0} / {1} kW".format(round(avg_load_last * hours_to_end) + total_kw, limit))
-print("====================")
-print("Cost: {0} grn".format(round(cost, 2)))
-print("====================")
-print("Night: {0}%".format(night * 100 / total_kw))
-print("Night off: {0} grn".format(round(month["night_off"], 2)))
+    night_price_without_discount = calculate_cost(night, tariffs, month["tariff"], False, month["limitExceeded"])
+    night_off = night_price_without_discount - night_price_without_discount * tariffs["nightPercent"] / 100.0
 
-print("====================")
-print("Total Night off: {0} grn".format(round(total["night_off"], 2)))
+    avg_load = (total_kw / month_hours)
+
+    last_power_range = month["items"][-1]
+    last_hours = get_hours(last_power_range, last_power_range)
+    avg_load_last = (last_power_range["totalKw"] / last_hours)
+
+    last_time = datetime.datetime.fromtimestamp(time.mktime(month["items"][-1]["endTime"]))
+    last_month_day = datetime.datetime(last_time.year, last_time.month, calendar.monthrange(last_time.year, last_time.month)[1], 0, 0)
+
+    hours_to_end = (last_month_day - last_time).total_seconds() / 60 / 60
+
+    limit = month["tariff"]["limit"]
+
+    kw_expected = int(round(avg_load * hours_to_end, 0) + total_kw)
+
+    if printAll:
+        print("Total: {0} / {1} kW".format(total_kw, limit))
+        print("====================")
+        print("Avg: {0} kW/h".format(round(avg_load, 2)))
+        print("Expected: {0} / {1} kW".format(kw_expected, limit))
+        print("====================")
+        print("Avg(last): {0} kW/h".format(round(avg_load_last, 2)))
+        print("Expected(last): {0} / {1} kW".format(round(avg_load_last * hours_to_end) + total_kw, limit))
+        print("====================")
+        print("Cost: {0} grn".format(round(cost, 2)))
+        print("====================")
+        print("Night: {0}%".format(night * 100 / total_kw))
+        print("Night off: {0} grn".format(round(month["night_off"], 2)))
+
+        print("====================")
+        print("Total Night off: {0} grn".format(round(total["night_off"], 2)))
+
+    return total_kw, limit, kw_expected
+
+calculateAll()

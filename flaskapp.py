@@ -3,6 +3,8 @@ from datetime import datetime
 from flask import Flask, request, flash, url_for, redirect, \
      render_template, abort, send_from_directory
 
+import powermeter
+
 app = Flask(__name__)
 app.config.from_pyfile('flaskapp.cfg')
 
@@ -14,9 +16,11 @@ def index():
 def serveStaticResource(resource):
     return send_from_directory('static/', resource)
 
-@app.route("/test")
+@app.route("/power")
 def test():
-    return "<strong>It's Alive!</strong>"
+    value = powermeter.calculateAll(False)
+
+    return '{{"total": {}, "limit": {}, "expected": {} }}'.format(*value)
 
 if __name__ == '__main__':
     app.run()
