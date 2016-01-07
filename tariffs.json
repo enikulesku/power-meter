@@ -1,0 +1,24 @@
+{
+  "nightPercent": 50,
+  "tariffs": [
+    {
+      "exp": "16-03-01",
+      "pricing": [
+        {
+          "name": "normal",
+          "limit": 600,
+          "cost": 789,
+          "overLimitCost": 1479
+        },
+        {
+          "name": "heating",
+          "limit": 3600,
+          "cost": 456,
+          "overLimitCost": 1479,
+          "start": "10-01",
+          "end": "05-01"
+        }
+      ]
+    }
+  ]
+}
